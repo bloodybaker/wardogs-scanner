@@ -1,0 +1,79 @@
+name: Sign scanner
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  sign:
+    if: github.ref == 'refs/heads/main'
+    runs-on: windows-2025
+    environment: signpath-production
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          global-json-file: global.json
+      - name: Check configuration and read source version
+        id: metadata
+        shell: pwsh
+        env:
+          ORG: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          PROJECT: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          POLICY: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          CONFIG: ${{ vars.SIGNPATH_ARTIFACT_CONFIGURATION_SLUG }}
+          SIGNER: ${{ vars.SIGNPATH_CERTIFICATE_THUMBPRINT }}
+          TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+        run: |
+          foreach ($name in 'ORG','PROJECT','POLICY','CONFIG','SIGNER','TOKEN') {
+            if (-not [Environment]::GetEnvironmentVariable($name)) { throw "Missing setting: $name" }
+          }
+          if ($env:SIGNER -notmatch '^[a-fA-F0-9]{40}$') { throw 'Invalid signer thumbprint' }
+          [xml]$project = Get-Content src/Wardogs.Scanner.App/Wardogs.Scanner.App.csproj
+          $version = [string]$project.Project.PropertyGroup.Version
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Expected stable source version' }
+          "version=$version" >> $env:GITHUB_OUTPUT
+      - name: Offline regression fixtures
+        shell: pwsh
+        run: |
+          dotnet run --project tests/Wardogs.Scanner.Smoke -c Release -- --fixtures
+          if ($LASTEXITCODE -ne 0) { throw 'Fixtures failed' }
+      - name: Build from this commit
+        shell: pwsh
+        run: ./build.ps1 -OutputDirectory "$PWD/artifacts/unsigned" -LockedRestore
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        id: unsigned
+        with:
+          name: scanner-signing-input
+          path: artifacts/unsigned/WardogsScanner.exe
+          if-no-files-found: error
+      - name: Request signing and await manual SignPath approval
+        uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_ARTIFACT_CONFIGURATION_SLUG }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: artifacts/signed
+          parameters: |
+            version: "${{ steps.metadata.outputs.version }}"
+      - name: Verify signature and hash signed bytes
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.metadata.outputs.version }}
+          SIGNER: ${{ vars.SIGNPATH_CERTIFICATE_THUMBPRINT }}
+        run: ./scripts/verify-signed.ps1 -Path artifacts/signed/WardogsScanner.exe -ExpectedVersion $env:VERSION -ExpectedSignerThumbprint $env:SIGNER
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: scanner-signed-${{ steps.metadata.outputs.version }}
+          path: |
+            artifacts/signed/WardogsScanner.exe
+            artifacts/signed/WardogsScanner.sha256.txt
+          if-no-files-found: error

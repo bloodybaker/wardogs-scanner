@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>WardogsScanner</AssemblyName>
+    <Version>0.7.4</Version>
+    <Product>WARDOGS Scanner</Product>
+    <Company>WARDOGS</Company>
+    <Description>Consent-based diagnostics for WARDOGS moderation appeals</Description>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\PRIVACY.md" LogicalName="Wardogs.Scanner.Privacy" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
+    <Resource Include="Assets\wardogs-ua-logo.png" />
+    <Resource Include="Assets\e-Ukraine-Regular.otf" />
+    <Resource Include="Assets\e-Ukraine-Bold.otf" />
+  </ItemGroup>
+</Project>
