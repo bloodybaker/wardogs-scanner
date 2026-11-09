@@ -1,37 +1,24 @@
-# SignPath Foundation: підготовка
+# SignPath Foundation setup
 
-Current status: https://github.com/bloodybaker/wardogs-scanner has been created
-as a private repository. Initial import is complete. The commands below are
-historical setup instructions; do not repeat them. Make the repository public
-after asset review, before applying. Foundation acceptance and signing remain pending.
+Repository: https://github.com/bloodybaker/wardogs-scanner
+Owner: https://github.com/bloodybaker
 
-## Перед публікацією
+## Completed preparation
 
-1. Завершити THIRD_PARTY_NOTICES.md: підтвердити права на e-Ukraine шрифти й
-   логотип або замінити їх; включити upstream ліцензії з точних NuGet/runtime
-   пакетів до дистрибутива. MIT не змінює права третіх осіб.
-2. Створити порожній public GitHub repository `wardogs-scanner` без README.
-3. Після перевірки прав та файлів виконати з D:\wdpbscanner:
+- MIT original code and owner-authorized logo.
+- e-Ukraine CC BY 4.0 attribution; exact match with the official download.
+- Dependency/runtime license texts and notices in the release ZIP.
+- GitHub-hosted build and offline fixtures; separate manual signing workflow.
+- Embedded privacy policy and named roles in CODE_SIGNING.md.
 
-```powershell
-git init -b main
-git add .github .signpath scripts src tests .gitignore global.json build.ps1 sign.ps1 README.md OFFLINE-SCAN.md LICENSE PRIVACY.md CODE_SIGNING.md SIGNPATH-SETUP.md SIGNPATH-APPLICATION.md THIRD_PARTY_NOTICES.md
-git diff --cached --stat
-git diff --cached
-# Перевірити: немає звітів, ключів, work, backups, dist, .dotnet-home.
-git commit -m "Prepare scanner for open-source code signing"
-git remote add origin https://github.com/bloodybaker/wardogs-scanner.git
-git push -u origin main
-```
+## Application
 
-4. Заповнити справжні GitHub-посилання на авторів, reviewers та approvers у
-   CODE_SIGNING.md. Увімкнути MFA, захист main, review і required Build scanner.
-5. Перевірити GitHub CI та опублікувати описаний unsigned release як доказ
-   існуючого релізу. Не називати його підписаним.
-6. Подати SIGNPATH-APPLICATION.md через https://signpath.org/apply.html.
-   Заявка автоматично не надсилається. Foundation оцінює репутацію та умови.
-   Прямо узгодити Windows security/device diagnostics і згоду на передачу:
-   наразі немає користувацького offline scan; відмова зупиняє весь scan.
+Submit through https://signpath.org/apply.html with SIGNPATH-APPLICATION.md.
+Acceptance and signing are not yet granted. Disclose security-state/device
+diagnostics, required opt-in transfer, absence of an offline user mode and
+CC BY 4.0 non-code assets for Foundation review. MFA is required for both
+GitHub and the future SignPath account. Only claim account security verified
+when the owner confirms it.
 
 ## Після прийняття
 

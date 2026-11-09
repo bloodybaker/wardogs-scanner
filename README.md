@@ -1,26 +1,67 @@
-# WARDOGS post-ban scanner
+# WARDOGS Scanner
 
-Repository: https://github.com/bloodybaker/wardogs-scanner (private preparation; public availability pending asset review).
+[![Build scanner](https://github.com/bloodybaker/wardogs-scanner/actions/workflows/build.yml/badge.svg)](https://github.com/bloodybaker/wardogs-scanner/actions/workflows/build.yml)
 
-## Open source and Code signing policy
+Consent-based Windows diagnostics for human review of WARDOGS moderation appeals.
+Windows 10/11 x64, .NET 10 WPF, portable self-contained executable.
 
-Original source is licensed under [MIT](LICENSE). See [third-party publication review](THIRD_PARTY_NOTICES.md).
-SignPath Foundation integration is prepared; acceptance and signing are pending.
-See [Code signing policy](CODE_SIGNING.md), [privacy](PRIVACY.md),
-[setup](SIGNPATH-SETUP.md) and [application draft](SIGNPATH-APPLICATION.md).
-Current source is 0.7.4; historical notes below do not override the current privacy policy.
+Source: https://github.com/bloodybaker/wardogs-scanner
+Community service: https://wardogs.com.ua/scanner
+Downloads: https://github.com/bloodybaker/wardogs-scanner/releases
 
-Windows 10/11 x64, .NET 10 WPF. The scanner requires elevation and explicit consent. Version 0.5 inventories active executable processes, hashes accessible binaries, reads their Authenticode publisher, reviews loaded WARDOGS modules, services/drivers, autorun, scheduled-task and IFEO/AppInit persistence, recent executables, Prefetch/PCA/BAM execution traces, NTFS USN journal health, and Windows Secure Boot/VBS/HVCI/Code Integrity posture. It uploads directly over HTTPS using a single one-time code issued by the WARDOGS administrator.
+## Current version: 0.7.5
 
-Browser history is matched locally against bundled WARDOGS cheat-market domain rules and game-contextual keywords. The report includes a matched rule/domain, browser/profile, aggregate visit count and first/last matching timestamps; it never includes unrelated URLs, page titles, searches, cookies, credentials, or tokens. It does not inspect documents, photos, messages, or private files. It does not install persistence, delete anything, disable security controls, auto-delete itself, or claim that a clean delayed scan proves past innocence. A site visit is a review lead, never proof of purchase or cheat use. Exact history-clear time is reported only when a durable Windows/browser artifact exists; otherwise it remains unknown.
+This release adds embedded privacy information, public source, licensing notices
+and GitHub/SignPath build preparation. Detection behavior is unchanged from 0.7.4.
+The GitHub prerelease is unsigned and is for review/testing. Production server
+acceptance requires its executable hash to be explicitly enabled by the operator.
+Do not bypass Windows protection or replace an existing production download.
 
-Build:
+The scanner requires administrator elevation, a one-time code and explicit consent.
+It reads process/file/module metadata, execution and persistence traces, protection
+state, device information, game-access handles and bounded script/command context.
+Browser matching is local; only matched URLs, relevant search queries, visit counts
+and timestamps are reported. Reports include technical paths and a pseudonymous
+device hash and go over HTTPS to wardogs.com.ua after consent. Raw command lines,
+scripts and memory contents, unrelated history, cookies, credentials, private
+documents, photos and messages are not uploaded. Findings require human review.
+
+Read [Privacy](PRIVACY.md) before scanning. Declining consent prevents the scan;
+there is no offline end-user scan mode. Close and delete the portable application
+to remove it; this does not delete reports already transferred to the server.
+
+## Code signing policy
+
+[Code signing policy](CODE_SIGNING.md) lists the responsible maintainer and release
+controls. SignPath Foundation acceptance and signing are pending. Downloads must
+not be represented as Foundation-signed until a certificate is approved and used.
+
+## Licensing
+
+Original code and owner-authored logo: [MIT](LICENSE). e-Ukraine fonts: CC BY 4.0,
+unmodified, with [attribution](licenses/e-Ukraine-NOTICE.md). Dependencies retain
+their own licenses. [Third-party notices](THIRD_PARTY_NOTICES.md) and all license
+texts are included in the release ZIP. See [SignPath setup](SIGNPATH-SETUP.md).
+
+## Build and test
+
+Install the exact SDK in global.json. From the repository root:
 
 ```powershell
-.\build.ps1
+dotnet run --project tests/Wardogs.Scanner.Smoke -c Release -- --fixtures
+.\build.ps1 -OutputDirectory "$PWD/artifacts/local" -LockedRestore
+.\scripts/package-release.ps1 -ArtifactDirectory "$PWD/artifacts/local"
 ```
 
-The portable executable and its SHA-256 receipt are written to `dist`. Production distribution still requires an Authenticode certificate; the deployment script publishes the current executable SHA-256 policy on the server.
+Fixtures use synthetic data. Live collection is opt-in and should only be run
+with the machine owner's consent. GitHub Actions builds unsigned candidates;
+the separate signing workflow requires configured SignPath credentials and
+manual approval. Hashes for release publication must come from final signed bytes.
+
+## Historical release notes
+
+The notes below document earlier versions and experiments. Current privacy
+boundaries above and PRIVACY.md take precedence.
 
 ## 0.5 changes and evidence boundaries
 

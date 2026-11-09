@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>WardogsScanner</AssemblyName>
-    <Version>0.7.4</Version>
+    <Version>0.7.5</Version>
     <Product>WARDOGS Scanner</Product>
     <Company>WARDOGS</Company>
     <Description>Consent-based diagnostics for WARDOGS moderation appeals</Description>

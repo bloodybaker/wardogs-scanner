@@ -12,7 +12,7 @@ namespace Wardogs.Scanner;
 public partial class MainWindow : Window
 {
     private const string ApiBase = "https://wardogs.com.ua";
-    private const string Version = "0.7.4";
+    private const string Version = "0.7.5";
     private static readonly Regex IncidentPattern = new("^[0-9a-f]{32}$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private readonly ApiClient _api = new();
 

@@ -24,8 +24,18 @@ jobs:
       - name: Build unsigned candidate
         shell: pwsh
         run: ./build.ps1 -OutputDirectory "$PWD/artifacts/unsigned" -LockedRestore
+      - name: Include license notices and checksum
+        shell: pwsh
+        run: ./scripts/package-release.ps1 -ArtifactDirectory artifacts/unsigned
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: scanner-unsigned
-          path: artifacts/unsigned/WardogsScanner.exe
+          path: |
+            artifacts/unsigned/WardogsScanner.exe
+            artifacts/unsigned/WardogsScanner.sha256.txt
+            artifacts/unsigned/LICENSE
+            artifacts/unsigned/PRIVACY.md
+            artifacts/unsigned/CODE_SIGNING.md
+            artifacts/unsigned/THIRD_PARTY_NOTICES.md
+            artifacts/unsigned/licenses/
           if-no-files-found: error

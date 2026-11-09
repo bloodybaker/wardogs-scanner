@@ -9,14 +9,14 @@ with this project's certificate. Each production request requires a human
 approver in SignPath. Tokens are stored in a protected GitHub environment, never
 in source. MFA is required for repository and SignPath team accounts.
 
-Before activation, replace these pending assignments with real GitHub profile
-or team links:
+The project owner is responsible for these roles. Production SignPath account
+enrollment and signing policy activation remain pending:
 
 | Role | Members |
 | --- | --- |
-| Authors / committers | Pending owner assignment |
-| Reviewers | Pending owner assignment |
-| Signing approvers | Pending owner assignment |
+| Authors / committers | [Yevhenii Chykalov (@bloodybaker)](https://github.com/bloodybaker) |
+| Reviewers | [Yevhenii Chykalov (@bloodybaker)](https://github.com/bloodybaker) |
+| Signing approvers | [Yevhenii Chykalov (@bloodybaker)](https://github.com/bloodybaker) |
 
 Privacy policy: [PRIVACY.md](PRIVACY.md). Reports go to WARDOGS only after
 explicit consent and starting a scan. There is no offline end-user scan mode.
