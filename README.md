@@ -7,15 +7,17 @@ Windows 10/11 x64, .NET 10 WPF, portable self-contained executable.
 
 Source: https://github.com/bloodybaker/wardogs-scanner
 Community service: https://wardogs.com.ua/scanner
-Downloads: https://github.com/bloodybaker/wardogs-scanner/releases
+Downloads: https://wardogs.com.ua/scanner
+Direct EXE: https://github.com/bloodybaker/wardogs-scanner/releases/download/v0.7.5/WardogsScanner.exe
 
 ## Current version: 0.7.5
 
 This release adds embedded privacy information, public source, licensing notices
 and GitHub/SignPath build preparation. Detection behavior is unchanged from 0.7.4.
-The GitHub prerelease is unsigned and is for review/testing. Production server
-acceptance requires its executable hash to be explicitly enabled by the operator.
-Do not bypass Windows protection or replace an existing production download.
+This release is unsigned; SignPath Foundation approval is pending. The permanent
+download page publishes the server-approved version and SHA-256. Its download
+button points to a versioned GitHub EXE, so future releases can update the download
+and server approval together. Do not bypass Windows protection.
 
 The scanner requires administrator elevation, a one-time code and explicit consent.
 It reads process/file/module metadata, execution and persistence traces, protection
@@ -41,7 +43,8 @@ not be represented as Foundation-signed until a certificate is approved and used
 Original code and owner-authored logo: [MIT](LICENSE). e-Ukraine fonts: CC BY 4.0,
 unmodified, with [attribution](licenses/e-Ukraine-NOTICE.md). Dependencies retain
 their own licenses. [Third-party notices](THIRD_PARTY_NOTICES.md) and all license
-texts are included in the release ZIP. See [SignPath setup](SIGNPATH-SETUP.md).
+texts are included in the release ZIP and linked above for direct EXE users.
+See [SignPath setup](SIGNPATH-SETUP.md).
 
 ## Build and test
 
