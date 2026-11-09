@@ -1,4 +1,4 @@
-# Application draft вЂ” not submitted
+# Application draft — not submitted
 
 Project: WARDOGS Scanner
 Website/download: https://wardogs.com.ua/scanner
