@@ -182,19 +182,40 @@ public static class AdvancedCollector
         var checkedCount = 0;
         var sources = 0;
         var failures = 0;
+        var devicePaths = PrefetchReader.DevicePaths();
         try
         {
             var prefetch = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Prefetch");
             if (Directory.Exists(prefetch))
             {
                 sources++;
-                foreach (var path in Directory.EnumerateFiles(prefetch, "*.pf").OrderByDescending(File.GetLastWriteTimeUtc).Take(140))
+                foreach (var path in Directory.EnumerateFiles(prefetch, "*.pf").OrderByDescending(File.GetLastWriteTimeUtc).Take(1024))
                 {
                     token.ThrowIfCancellationRequested();
                     checkedCount++;
                     var info = new FileInfo(path);
-                    AddHistory(evidence, "prefetch-" + StableId(info.Name), "prefetch_metadata", "%SYSTEMROOT%\\Prefetch\\" + info.Name,
-                        UnixOrNull(info.LastWriteTimeUtc), "WD-PREFETCH-INVENTORY", info.Name, new() { ["size"] = info.Length });
+                    var details = new Dictionary<string, object?> { ["size"] = info.Length,
+                        ["prefetch_file"] = info.Name, ["prefetch_path"] = "%SYSTEMROOT%\\Prefetch\\" + info.Name,
+                        ["created_at"] = UnixOrNull(info.CreationTimeUtc), ["modified_at"] = UnixOrNull(info.LastWriteTimeUtc) };
+                    PrefetchReader.Entry? parsed = null;
+                    try { parsed = PrefetchReader.Read(path, devicePaths); }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+                    {
+                        failures++;
+                        details["parse_status"] = "unavailable";
+                    }
+                    details["process_name"] = parsed?.Executable ?? info.Name.Split('-')[0];
+                    details["process_path"] = Truncate(Normalize(parsed?.ProcessPath ?? ""), 500);
+                    details["run_count"] = parsed?.RunCount;
+                    details["last_run_at"] = parsed?.RunTimes.FirstOrDefault() is > 0 ? parsed.RunTimes[0] : null;
+                    if (parsed != null)
+                    {
+                        details["prefetch_version"] = parsed.Version;
+                        details["parse_status"] = "parsed";
+                        for (int i = 0; i < parsed.RunTimes.Length; i++) details["run_time_" + (i + 1)] = parsed.RunTimes[i];
+                    }
+                    AddHistory(evidence, "prefetch-" + StableId(info.Name), "prefetch_metadata", Normalize(parsed?.ProcessPath ?? ""),
+                        details["last_run_at"] as double?, "WD-PREFETCH-INVENTORY", (string)details["process_name"]!, details);
                 }
             }
         }
@@ -239,7 +260,8 @@ public static class AdvancedCollector
                             token.ThrowIfCancellationRequested();
                             checkedCount++;
                             var timestamp = BamTime(user!.GetValue(path));
-                            AddHistory(evidence, "bam-" + StableId(sid + path), "bam_execution", Normalize(path), timestamp, "WD-BAM-EXECUTION", Path.GetFileName(path), new());
+                            var processPath = PrefetchReader.ResolvePath(path, devicePaths);
+                            AddHistory(evidence, "bam-" + StableId(sid + path), "bam_execution", Normalize(processPath), timestamp, "WD-BAM-EXECUTION", Path.GetFileName(path), new());
                         }
                     }
                 }
@@ -297,7 +319,6 @@ public static class AdvancedCollector
 
     private static void AddHistory(List<Evidence> evidence, string id, string type, string path, double? timestamp, string rule, string name, Dictionary<string, object?> details)
     {
-        if (evidence.Count >= 430) return;
         var suspicious = HasSuspiciousName(name);
         evidence.Add(Item(id, type, "historical_execution", timestamp, path, suspicious ? "WD-HISTORY-NAME-REVIEW" : rule,
             suspicious ? "medium" : "none", suspicious ? "low" : "unknown",

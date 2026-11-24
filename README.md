@@ -8,9 +8,9 @@ Windows 10/11 x64, .NET 10 WPF, portable self-contained executable.
 Source: https://github.com/bloodybaker/wardogs-scanner
 Community service: https://wardogs.com.ua/scanner
 Downloads: https://wardogs.com.ua/scanner
-Direct EXE: https://github.com/bloodybaker/wardogs-scanner/releases/download/v0.7.5/WardogsScanner.exe
+Direct EXE: https://github.com/bloodybaker/wardogs-scanner/releases/download/v0.7.6/WardogsScanner.exe
 
-## Current version: 0.7.5
+## Current version: 0.7.6
 
 This release adds embedded privacy information, public source, licensing notices
 and GitHub/SignPath build preparation. Detection behavior is unchanged from 0.7.4.
@@ -62,6 +62,13 @@ the separate signing workflow requires configured SignPath credentials and
 manual approval. Hashes for release publication must come from final signed bytes.
 
 ## Historical release notes
+
+### 0.7.6
+
+- Parse compressed and uncompressed Prefetch: executable paths, run counts, last run times, and file timestamps.
+- Prioritize BAM and Prefetch inventory, including paths from other volumes.
+- Exclude Windows Defender Platform from risk signals.
+
 
 The notes below document earlier versions and experiments. Current privacy
 boundaries above and PRIVACY.md take precedence.

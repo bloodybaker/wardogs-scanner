@@ -1,4 +1,5 @@
 using Wardogs.Scanner;
+if (args.Contains("--prefetch")) { PrefetchFixtures.Run(); return; }
 if (args.Length==2 && args[0]=="--handle-owner") { NativeFixture.Hold(int.Parse(args[1])); return; }
 if (args.Contains("--guard-child")) { Thread.Sleep(60000); return; }
 if (args.Contains("--context-native")) { await ProcessContextFixtures.Native(); return; }
@@ -56,7 +57,7 @@ if (args.Contains("--hardware")) {
     } finally { Directory.Delete(testFolder); }
     return;
 }
-if (!args.Contains("--live")) { FixtureChecks.Run(); ProcessContextFixtures.Offline(); UiHashFixture.Run(); return; }
+if (!args.Contains("--live")) { FixtureChecks.Run(); ProcessContextFixtures.Offline(); PrefetchFixtures.Run(); UiHashFixture.Run(); return; }
 
 var (processModule, processEvidence) = await ProcessCollector.CollectAsync(CancellationToken.None);
 var forensic = await ForensicCollector.CollectAsync(CancellationToken.None);

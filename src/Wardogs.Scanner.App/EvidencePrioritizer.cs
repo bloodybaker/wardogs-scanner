@@ -17,7 +17,7 @@ public static class EvidencePrioritizer
 
     public static List<Evidence> Select(IEnumerable<Evidence> source, int limit = 500)
     {
-        var all = source.ToList();
+        var all = source.Select(EvidencePolicy.Normalize).ToList();
         var priority = all.Where(item => !string.Equals(item.Severity, "none", StringComparison.OrdinalIgnoreCase))
             .OrderBy(item => SeverityRank(item.Severity)).ThenByDescending(item => item.Timestamp ?? 0).Take(limit).ToList();
         if (priority.Count == limit) return priority;
@@ -27,7 +27,8 @@ public static class EvidencePrioritizer
                      .OrderBy(group => InventoryOrder(group.Key)))
         {
             var groupLimit = InventoryLimits.GetValueOrDefault(group.Key, 40);
-            priority.AddRange(group.OrderByDescending(item => item.Timestamp ?? 0).Take(Math.Min(groupLimit, limit - priority.Count)));
+            priority.AddRange(group.OrderBy(item => EvidencePolicy.IsSystem32(item.Path))
+                .ThenByDescending(item => item.Timestamp ?? 0).Take(Math.Min(groupLimit, limit - priority.Count)));
             if (priority.Count == limit) break;
         }
         return priority;
@@ -40,8 +41,9 @@ public static class EvidencePrioritizer
 
     private static int InventoryOrder(string type) => type.ToLowerInvariant() switch
     {
+        "bam_execution" => -5, "prefetch_metadata" => -4,
         "browser_history_clear_artifact" => -3, "browser_history_status" => -2, "dma_scan_coverage" => -1, "security_posture" => 0, "journal_status" => 1, "running_process" => 2,
         "recent_executable" => 3, "autorun" => 4, "startup_item" => 5,
-        "bam_execution" => 6, "pca_execution" => 7, "prefetch_metadata" => 8, _ => 9,
+        "pca_execution" => 7, _ => 9,
     };
 }
