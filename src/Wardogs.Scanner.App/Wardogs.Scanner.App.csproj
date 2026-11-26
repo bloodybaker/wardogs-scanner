@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>WardogsScanner</AssemblyName>
-    <Version>0.7.6</Version>
+    <Version>0.7.7</Version>
     <Product>WARDOGS Scanner</Product>
     <Company>WARDOGS</Company>
     <Description>Consent-based diagnostics for WARDOGS moderation appeals</Description>

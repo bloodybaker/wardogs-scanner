@@ -15,8 +15,8 @@ public static class ForensicCollector
         var modules = new List<ModuleResult>();
         var evidence = new List<Evidence>();
         var errors = new List<string>();
-        CollectServices(modules, evidence, errors, token);
-        CollectPersistence(modules, evidence, errors, token);
+        CollectionSafety.Run("services_drivers", () => CollectServices(modules, evidence, errors, token), modules, errors);
+        CollectionSafety.Run("persistence", () => CollectPersistence(modules, evidence, errors, token), modules, errors);
         AdvancedCollector.Collect(modules, evidence, errors, token);
         var now = Now();
         modules.Add(new ModuleResult("cleanup", "success", now, now, 0, ""));

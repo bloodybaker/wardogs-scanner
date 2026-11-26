@@ -21,6 +21,8 @@ jobs:
         run: |
           dotnet run --project tests/Wardogs.Scanner.Smoke -c Release -- --fixtures
           if ($LASTEXITCODE -ne 0) { throw 'Fixtures failed' }
+          dotnet run --no-build --project tests/Wardogs.Scanner.Smoke -c Release -- --offline
+          if ($LASTEXITCODE -ne 0) { throw 'Offline fixtures failed' }
       - name: Build unsigned candidate
         shell: pwsh
         run: ./build.ps1 -OutputDirectory "$PWD/artifacts/unsigned" -LockedRestore

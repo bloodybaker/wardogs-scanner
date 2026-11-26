@@ -15,13 +15,13 @@ public static class AdvancedCollector
 
     public static void Collect(List<ModuleResult> modules, List<Evidence> evidence, List<string> errors, CancellationToken token)
     {
-        CollectSecurityPosture(modules, evidence, errors);
-        HardwareCollector.Collect(modules,evidence,errors,token);
-        CollectTamperIndicators(modules, evidence, errors, token);
-        ModuleCollector.Collect(modules, evidence, errors, token);
-        CollectPersistenceHooks(modules, evidence, errors, token);
-        CollectRecentExecutables(modules, evidence, errors, token);
-        CollectExecutionHistory(modules, evidence, errors, token);
+        CollectionSafety.Run("security_posture", () => CollectSecurityPosture(modules, evidence, errors), modules, errors);
+        CollectionSafety.Run("hardware", () => HardwareCollector.Collect(modules,evidence,errors,token), modules, errors);
+        CollectionSafety.Run("tamper_indicators", () => CollectTamperIndicators(modules, evidence, errors, token), modules, errors);
+        CollectionSafety.Run("loaded_modules", () => ModuleCollector.Collect(modules, evidence, errors, token), modules, errors);
+        CollectionSafety.Run("persistence_hooks", () => CollectPersistenceHooks(modules, evidence, errors, token), modules, errors);
+        CollectionSafety.Run("recent_executables", () => CollectRecentExecutables(modules, evidence, errors, token), modules, errors);
+        CollectionSafety.Run("historical_execution", () => CollectExecutionHistory(modules, evidence, errors, token), modules, errors);
     }
 
     private static void CollectTamperIndicators(List<ModuleResult> modules, List<Evidence> evidence, List<string> errors, CancellationToken token)
@@ -193,35 +193,19 @@ public static class AdvancedCollector
                 {
                     token.ThrowIfCancellationRequested();
                     checkedCount++;
-                    var info = new FileInfo(path);
-                    var details = new Dictionary<string, object?> { ["size"] = info.Length,
-                        ["prefetch_file"] = info.Name, ["prefetch_path"] = "%SYSTEMROOT%\\Prefetch\\" + info.Name,
-                        ["created_at"] = UnixOrNull(info.CreationTimeUtc), ["modified_at"] = UnixOrNull(info.LastWriteTimeUtc) };
-                    PrefetchReader.Entry? parsed = null;
-                    try { parsed = PrefetchReader.Read(path, devicePaths); }
-                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+                    var item = CollectPrefetchFile(path, devicePaths);
+                    evidence.Add(item);
+                    if (item.Details.TryGetValue("error", out var reason))
                     {
                         failures++;
-                        details["parse_status"] = "unavailable";
+                        errors.Add(CollectionSafety.Limit("Prefetch " + item.Details["prefetch_file"] + ": " + reason));
                     }
-                    details["process_name"] = parsed?.Executable ?? info.Name.Split('-')[0];
-                    details["process_path"] = Truncate(Normalize(parsed?.ProcessPath ?? ""), 500);
-                    details["run_count"] = parsed?.RunCount;
-                    details["last_run_at"] = parsed?.RunTimes.FirstOrDefault() is > 0 ? parsed.RunTimes[0] : null;
-                    if (parsed != null)
-                    {
-                        details["prefetch_version"] = parsed.Version;
-                        details["parse_status"] = "parsed";
-                        for (int i = 0; i < parsed.RunTimes.Length; i++) details["run_time_" + (i + 1)] = parsed.RunTimes[i];
-                    }
-                    AddHistory(evidence, "prefetch-" + StableId(info.Name), "prefetch_metadata", Normalize(parsed?.ProcessPath ?? ""),
-                        details["last_run_at"] as double?, "WD-PREFETCH-INVENTORY", (string)details["process_name"]!, details);
                 }
             }
         }
-        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or System.Security.SecurityException)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            failures++; errors.Add("historical_execution.prefetch: " + ex.GetType().Name);
+            failures++; errors.Add("historical_execution.prefetch: " + CollectionSafety.Reason(ex));
         }
 
         try
@@ -240,9 +224,9 @@ public static class AdvancedCollector
                 }
             }
         }
-        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            failures++; errors.Add("historical_execution.pca: " + ex.GetType().Name);
+            failures++; errors.Add("historical_execution.pca: " + CollectionSafety.Reason(ex));
         }
 
         try
@@ -267,9 +251,9 @@ public static class AdvancedCollector
                 }
             }
         }
-        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            failures++; errors.Add("historical_execution.bam: " + ex.GetType().Name);
+            failures++; errors.Add("historical_execution.bam: " + CollectionSafety.Reason(ex));
         }
 
         try
@@ -296,7 +280,7 @@ public static class AdvancedCollector
         }
         catch (Exception ex)
         {
-            failures++; errors.Add("historical_execution.usn: " + ex.GetType().Name);
+            failures++; errors.Add("historical_execution.usn: " + CollectionSafety.Reason(ex));
         }
 
         try
@@ -309,12 +293,46 @@ public static class AdvancedCollector
         }
         catch (Exception ex)
         {
-            failures++; errors.Add("historical_execution.prefetch_state: " + ex.GetType().Name);
+            failures++; errors.Add("historical_execution.prefetch_state: " + CollectionSafety.Reason(ex));
         }
 
         var status = sources == 4 && failures == 0 ? "success" : "partial";
         modules.Add(new ModuleResult("historical_execution", status, started, Now(), checkedCount,
-            status == "success" ? "" : $"Доступно {sources} із 4 історичних джерел Windows."));
+            status == "success" ? "" : $"Доступно {sources} із 4 історичних джерел Windows. Помилок: {failures}; причини наведено біля записів і в помилках збору."));
+    }
+
+    public static Evidence CollectPrefetchFile(string path, IReadOnlyDictionary<string, string> devicePaths)
+    {
+        var info = new FileInfo(path);
+        var details = new Dictionary<string, object?> {
+            ["prefetch_file"] = info.Name, ["prefetch_path"] = "%SYSTEMROOT%\\Prefetch\\" + info.Name };
+        PrefetchReader.Entry? parsed = null;
+        try
+        {
+            details["size"] = info.Length;
+            details["created_at"] = UnixOrNull(info.CreationTimeUtc);
+            details["modified_at"] = UnixOrNull(info.LastWriteTimeUtc);
+            parsed = PrefetchReader.Read(path, devicePaths);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            details["parse_status"] = "error";
+            details["error"] = CollectionSafety.Reason(ex);
+        }
+        details["process_name"] = parsed?.Executable ?? info.Name.Split('-')[0];
+        details["process_path"] = Truncate(Normalize(parsed?.ProcessPath ?? ""), 500);
+        details["run_count"] = parsed?.RunCount;
+        details["last_run_at"] = parsed?.RunTimes.FirstOrDefault() is > 0 ? parsed.RunTimes[0] : null;
+        if (parsed != null)
+        {
+            details["prefetch_version"] = parsed.Version;
+            details["parse_status"] = "parsed";
+            for (int i = 0; i < parsed.RunTimes.Length; i++) details["run_time_" + (i + 1)] = parsed.RunTimes[i];
+        }
+        var evidence = new List<Evidence>();
+        AddHistory(evidence, "prefetch-" + StableId(info.Name), "prefetch_metadata", Normalize(parsed?.ProcessPath ?? ""),
+            details["last_run_at"] as double?, "WD-PREFETCH-INVENTORY", (string)details["process_name"]!, details);
+        return evidence[0];
     }
 
     private static void AddHistory(List<Evidence> evidence, string id, string type, string path, double? timestamp, string rule, string name, Dictionary<string, object?> details)

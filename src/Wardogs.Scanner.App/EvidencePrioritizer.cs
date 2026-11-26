@@ -27,7 +27,8 @@ public static class EvidencePrioritizer
                      .OrderBy(group => InventoryOrder(group.Key)))
         {
             var groupLimit = InventoryLimits.GetValueOrDefault(group.Key, 40);
-            priority.AddRange(group.OrderBy(item => EvidencePolicy.IsSystem32(item.Path))
+            priority.AddRange(group.OrderByDescending(item => item.Details.ContainsKey("error"))
+                .ThenBy(item => EvidencePolicy.IsSystem32(item.Path))
                 .ThenByDescending(item => item.Timestamp ?? 0).Take(Math.Min(groupLimit, limit - priority.Count)));
             if (priority.Count == limit) break;
         }

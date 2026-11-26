@@ -1,4 +1,7 @@
+global using System.IO;
 using Wardogs.Scanner;
+if (args.Length == 2 && args[0] == "--offline-ui") { OfflineUiFixture.Run(args[1]); return; }
+if (args.Contains("--offline")) { await OfflineFixtures.Run(); return; }
 if (args.Contains("--prefetch")) { PrefetchFixtures.Run(); return; }
 if (args.Length==2 && args[0]=="--handle-owner") { NativeFixture.Hold(int.Parse(args[1])); return; }
 if (args.Contains("--guard-child")) { Thread.Sleep(60000); return; }
